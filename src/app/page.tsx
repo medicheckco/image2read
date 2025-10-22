@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef } from "react";
@@ -29,7 +30,7 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
 
-  const processTesseract = async (imageUrl: string, fileName: string) => {
+  const processTesseract = async (imageUrl: string, fileName: string, canvasWidth: number, canvasHeight: number) => {
     setLoadingMessage("Analyzing document with Tesseract...");
     try {
       const result = await Tesseract.recognize(imageUrl, "eng", {
@@ -45,48 +46,35 @@ export default function Home() {
         data: { words },
       } = result;
 
-      const image = new Image();
-      image.src = imageUrl;
-      image.onload = () => {
-        const { width: imgWidth, height: imgHeight } = image;
-
-        const textElements: TextElement[] = words.map((word, index) => {
-          const { bbox } = word;
-          return {
-            id: `word-${index}-${Date.now()}`,
-            text: word.text,
-            x: (bbox.x0 / imgWidth) * 100,
-            y: (bbox.y0 / imgHeight) * 100,
-            width: ((bbox.x1 - bbox.x0) / imgWidth) * 100,
-            height: ((bbox.y1 - bbox.y0) / imgHeight) * 100,
-          };
-        });
-
-        const newDoc: MockDocument = {
-          id: `doc-${Date.now()}`,
-          name: fileName,
-          pages: [
-            {
-              id: `page-1`,
-              pageNumber: 1,
-              imageId: "uploaded-image", // This will be overridden
-              textElements: textElements,
-            },
-          ],
+      const textElements: TextElement[] = words.map((word, index) => {
+        const { bbox } = word;
+        return {
+          id: `word-${index}-${Date.now()}`,
+          text: word.text,
+          x: (bbox.x0 / canvasWidth) * 100,
+          y: (bbox.y0 / canvasHeight) * 100,
+          width: ((bbox.x1 - bbox.x0) / canvasWidth) * 100,
+          height: ((bbox.y1 - bbox.y0) / canvasHeight) * 100,
         };
-        
-        (newDoc as any).uploadedImageUrls = [imageUrl];
-        setDocument(newDoc);
-        setIsLoading(false);
+      });
+
+      const newDoc: MockDocument = {
+        id: `doc-${Date.now()}`,
+        name: fileName,
+        pages: [
+          {
+            id: `page-1`,
+            pageNumber: 1,
+            imageId: "uploaded-image", // This will be overridden
+            textElements: textElements,
+          },
+        ],
       };
-      image.onerror = () => {
-        toast({
-          variant: "destructive",
-          title: "Image Load Failed",
-          description: "Could not load image dimensions for processing.",
-        });
-        setIsLoading(false);
-      };
+      
+      (newDoc as any).uploadedImageUrls = [imageUrl];
+      setDocument(newDoc);
+      setIsLoading(false);
+
     } catch (error) {
       console.error("Tesseract Error:", error);
       toast({
@@ -97,6 +85,43 @@ export default function Home() {
       setIsLoading(false);
     }
   };
+
+  const preProcessImage = (file: File) => {
+    const imageUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.src = imageUrl;
+    image.onload = () => {
+      const canvas = canvasRef.current;
+       if (!canvas) {
+          toast({ variant: "destructive", title: "Error", description: "Canvas element not found." });
+          setIsLoading(false);
+          return;
+        }
+      const context = canvas.getContext("2d");
+      if (!context) {
+          toast({ variant: "destructive", title: "Error", description: "Could not get canvas context." });
+          setIsLoading(false);
+          return;
+      }
+
+      // Upscale image for better OCR
+      const scaleFactor = 2;
+      const upscaledWidth = image.width * scaleFactor;
+      const upscaledHeight = image.height * scaleFactor;
+
+      canvas.width = upscaledWidth;
+      canvas.height = upscaledHeight;
+      context.drawImage(image, 0, 0, upscaledWidth, upscaledHeight);
+
+      const upscaledImageUrl = canvas.toDataURL();
+      
+      processTesseract(upscaledImageUrl, file.name, upscaledWidth, upscaledHeight);
+    };
+    image.onerror = () => {
+        toast({ variant: "destructive", title: "Image Load Failed", description: "Could not load the uploaded image file." });
+        setIsLoading(false);
+    }
+  }
 
   const processPdf = async (file: File) => {
     const fileReader = new FileReader();
@@ -204,8 +229,7 @@ export default function Home() {
       setIsLoading(true);
 
       if (isImage) {
-        const imageUrl = URL.createObjectURL(file);
-        processTesseract(imageUrl, file.name);
+        preProcessImage(file);
       } else if (isPdf) {
         setLoadingMessage("Rendering PDF...");
         processPdf(file);
@@ -284,3 +308,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
