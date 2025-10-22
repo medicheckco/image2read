@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import Tesseract from "tesseract.js";
+import Tesseract, { OEM } from "tesseract.js";
 import { Loader2, UploadCloud, Sparkles } from "lucide-react";
 import DocumentViewer from "@/components/document-viewer";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { MockDocument, Character } from "@/lib/types";
+import type { MockDocument, TextElement } from "@/lib/types";
 import { MOCK_DOC } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 
@@ -37,9 +37,7 @@ export default function Home() {
       }
 
       setIsLoading(true);
-
       const imageUrl = URL.createObjectURL(file);
-
       setLoadingMessage("Analyzing document with Tesseract...");
 
       try {
@@ -53,7 +51,7 @@ export default function Home() {
         });
 
         const {
-          data: { symbols },
+          data: { words },
         } = result;
 
         const image = new Image();
@@ -61,16 +59,15 @@ export default function Home() {
         image.onload = () => {
           const { width: imgWidth, height: imgHeight } = image;
 
-          const characters: Character[] = symbols
-          .filter(sym => sym.text.trim() !== '')
-          .map((sym, index) => {
+          const textElements: TextElement[] = words.map((word, index) => {
+            const { bbox } = word;
             return {
-              id: `char-${index}-${Date.now()}`,
-              char: sym.text,
-              x: (sym.bbox.x0 / imgWidth) * 100,
-              y: (sym.bbox.y0 / imgHeight) * 100,
-              width: ((sym.bbox.x1 - sym.bbox.x0) / imgWidth) * 100,
-              height: ((sym.bbox.y1 - sym.bbox.y0) / imgHeight) * 100,
+              id: `word-${index}-${Date.now()}`,
+              text: word.text,
+              x: (bbox.x0 / imgWidth) * 100,
+              y: (bbox.y0 / imgHeight) * 100,
+              width: ((bbox.x1 - bbox.x0) / imgWidth) * 100,
+              height: ((bbox.y1 - bbox.y0) / imgHeight) * 100,
             };
           });
 
@@ -82,7 +79,7 @@ export default function Home() {
                 id: `page-1`,
                 pageNumber: 1,
                 imageId: "uploaded-image",
-                characters: characters,
+                textElements: textElements,
               },
             ],
           };
@@ -90,16 +87,15 @@ export default function Home() {
           (newDoc as any).uploadedImageUrl = imageUrl;
           setDocument(newDoc);
           setIsLoading(false);
-        }
+        };
         image.onerror = () => {
-             toast({
-              variant: "destructive",
-              title: "Image Load Failed",
-              description: "Could not load image dimensions.",
-            });
-            setIsLoading(false);
-        }
-
+          toast({
+            variant: "destructive",
+            title: "Image Load Failed",
+            description: "Could not load image dimensions.",
+          });
+          setIsLoading(false);
+        };
       } catch (error) {
         console.error("Tesseract Error:", error);
         toast({

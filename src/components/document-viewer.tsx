@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import {
   ArrowLeft,
@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/contexts/settings-context";
-import type { MockDocument, Character } from "@/lib/types";
+import type { MockDocument, TextElement } from "@/lib/types";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -24,30 +24,66 @@ interface DocumentViewerProps {
 }
 
 export default function DocumentViewer({ document, onExit, overrideImageUrl }: DocumentViewerProps) {
-  const { largeHitTargets, playbackMode } = useSettings();
+  const { largeHitTargets, playbackSpeed, voice, language } = useSettings();
   const { toast } = useToast();
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [scale, setScale] = useState(1);
-  const [activeChar, setActiveChar] = useState<string | null>(null);
+  const [activeWord, setActiveWord] = useState<string | null>(null);
+  const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
+
+  useEffect(() => {
+    setSpeechSynthesis(window.speechSynthesis);
+  }, []);
 
   const currentPage = document.pages[currentPageIndex];
   const pageImage = PlaceHolderImages.find((img) => img.id === currentPage.imageId);
   
   const imageUrl = overrideImageUrl || pageImage?.imageUrl;
 
-  const handleCharClick = (char: Character) => {
-    const message = `Playing ${playbackMode === 'phoneme' ? 'sound for' : 'letter name'}: ${char.char}`;
-    console.log(message);
+  const speak = (text: string) => {
+    if (!speechSynthesis) {
+      toast({
+        variant: "destructive",
+        title: "Speech Synthesis not available",
+        description: "Your browser does not support text-to-speech.",
+      });
+      return;
+    }
+    
+    speechSynthesis.cancel(); // Cancel any ongoing speech
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = language;
+    utterance.rate = playbackSpeed;
+
+    const availableVoices = speechSynthesis.getVoices();
+    const selectedVoice = availableVoices.find(v => 
+        v.lang.startsWith(language.split('-')[0]) && 
+        (voice === 'male' ? /male/i.test(v.name) : /female/i.test(v.name) || !/male/i.test(v.name))
+    );
+    
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+    } else {
+        console.warn(`No '${voice}' voice found for language '${language}'. Using default.`);
+    }
+
     toast({
-      title: (
-        <div className="flex items-center">
-          <Volume2 className="mr-2 h-5 w-5 text-primary" />
-          <span>{message}</span>
-        </div>
-      ),
-    });
-    setActiveChar(char.id);
-    setTimeout(() => setActiveChar(null), 300);
+        title: (
+          <div className="flex items-center">
+            <Volume2 className="mr-2 h-5 w-5 text-primary" />
+            <span>Speaking: {text}</span>
+          </div>
+        ),
+      });
+
+    speechSynthesis.speak(utterance);
+  };
+
+  const handleWordClick = (word: TextElement) => {
+    speak(word.text);
+    setActiveWord(word.id);
+    setTimeout(() => setActiveWord(null), 300);
   };
 
   const handleNextPage = () => {
@@ -63,11 +99,11 @@ export default function DocumentViewer({ document, onExit, overrideImageUrl }: D
   };
 
   const hitboxClass = useMemo(() => {
-    return largeHitTargets ? "p-2" : "p-0.5";
+    return largeHitTargets ? "p-1" : "p-0";
   }, [largeHitTargets]);
 
   if (!imageUrl) {
-    return <div>Error loading document page.</div>;
+    return <div className="flex h-screen items-center justify-center">Error loading document page.</div>;
   }
 
   return (
@@ -98,24 +134,24 @@ export default function DocumentViewer({ document, onExit, overrideImageUrl }: D
             style={{ width: '100%', height: '100%' }}
             priority
           />
-          {currentPage.characters.map((char) => (
+          {currentPage.textElements.map((word) => (
             <div
-              key={char.id}
+              key={word.id}
               className={cn("absolute", hitboxClass)}
               style={{
-                left: `${char.x}%`,
-                top: `${char.y}%`,
-                width: `${char.width}%`,
-                height: `${char.height}%`,
+                left: `${word.x}%`,
+                top: `${word.y}%`,
+                width: `${word.width}%`,
+                height: `${word.height}%`,
               }}
             >
               <button
-                aria-label={`Letter ${char.char}`}
-                onClick={() => handleCharClick(char)}
+                aria-label={`Word ${word.text}`}
+                onClick={() => handleWordClick(word)}
                 className={cn(
                   "h-full w-full cursor-pointer rounded-sm transition-all duration-300",
-                  activeChar === char.id
-                    ? "scale-125 bg-accent/50"
+                  activeWord === word.id
+                    ? "scale-105 bg-accent/50"
                     : "hover:bg-accent/30"
                 )}
               />

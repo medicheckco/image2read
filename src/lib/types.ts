@@ -1,6 +1,6 @@
-export interface Character {
+export interface TextElement {
   id: string;
-  char: string;
+  text: string;
   x: number;
   y: number;
   width: number;
@@ -11,7 +11,7 @@ export interface DocumentPage {
   id: string;
   pageNumber: number;
   imageId: string;
-  characters: Character[];
+  textElements: TextElement[];
 }
 
 export interface MockDocument {

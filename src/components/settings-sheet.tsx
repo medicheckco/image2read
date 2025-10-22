@@ -27,8 +27,6 @@ export function SettingsSheet({ children }: { children: React.ReactNode }) {
   const {
     language,
     setLanguage,
-    playbackMode,
-    setPlaybackMode,
     voice,
     setVoice,
     playbackSpeed,
@@ -64,24 +62,6 @@ export function SettingsSheet({ children }: { children: React.ReactNode }) {
           </div>
 
           <Separator />
-
-          <div className="grid gap-3">
-            <Label>Playback Mode</Label>
-            <RadioGroup
-              value={playbackMode}
-              onValueChange={(value) => setPlaybackMode(value as "phoneme" | "letter")}
-              className="flex space-x-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="phoneme" id="phoneme" />
-                <Label htmlFor="phoneme">Phoneme (Sound)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="letter" id="letter" />
-                <Label htmlFor="letter">Letter Name</Label>
-              </div>
-            </RadioGroup>
-          </div>
 
           <div className="grid gap-3">
             <Label>Voice</Label>
@@ -121,7 +101,7 @@ export function SettingsSheet({ children }: { children: React.ReactNode }) {
               <div className="space-y-0.5">
                 <Label htmlFor="large-targets">Large Hit Targets</Label>
                 <p className="text-sm text-muted-foreground">
-                    Increases the touch area for letters.
+                    Increases the touch area for words.
                 </p>
               </div>
               <Switch

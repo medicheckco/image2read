@@ -2,14 +2,11 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
-type PlaybackMode = "phoneme" | "letter";
 type Voice = "male" | "female";
 
 interface Settings {
   language: string;
   setLanguage: (language: string) => void;
-  playbackMode: PlaybackMode;
-  setPlaybackMode: (mode: PlaybackMode) => void;
   voice: Voice;
   setVoice: (voice: Voice) => void;
   playbackSpeed: number;
@@ -21,8 +18,6 @@ interface Settings {
 const defaultSettings: Settings = {
   language: "en-US",
   setLanguage: () => {},
-  playbackMode: "phoneme",
-  setPlaybackMode: () => {},
   voice: "female",
   setVoice: () => {},
   playbackSpeed: 1,
@@ -43,7 +38,6 @@ export const useSettings = () => {
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState(defaultSettings.language);
-  const [playbackMode, setPlaybackMode] = useState<PlaybackMode>(defaultSettings.playbackMode);
   const [voice, setVoice] = useState<Voice>(defaultSettings.voice);
   const [playbackSpeed, setPlaybackSpeed] = useState(defaultSettings.playbackSpeed);
   const [largeHitTargets, setLargeHitTargets] = useState(defaultSettings.largeHitTargets);
@@ -51,8 +45,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     language,
     setLanguage,
-    playbackMode,
-    setPlaybackMode,
     voice,
     setVoice,
     playbackSpeed,
