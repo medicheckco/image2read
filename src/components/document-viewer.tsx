@@ -73,8 +73,13 @@ export default function DocumentViewer({ document, onExit, overrideImageUrls }: 
     }
     
     speechSynthesis.cancel(); // Cancel any ongoing speech
+
+    // Sanitize the text to remove non-alphanumeric characters except for apostrophes and hyphens
+    const cleanedText = text.replace(/[^a-zA-Z0-9'-]/g, '');
+
+    if (!cleanedText) return;
     
-    const utterance = new SpeechSynthesisUtterance(text);
+    const utterance = new SpeechSynthesisUtterance(cleanedText);
     utterance.lang = language;
     utterance.rate = playbackSpeed;
 
@@ -95,7 +100,7 @@ export default function DocumentViewer({ document, onExit, overrideImageUrls }: 
         title: (
           <div className="flex items-center">
             <Volume2 className="mr-2 h-5 w-5 text-primary" />
-            <span>Speaking: {text}</span>
+            <span>Speaking: {cleanedText}</span>
           </div>
         ),
       });
