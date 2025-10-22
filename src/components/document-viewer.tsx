@@ -25,7 +25,7 @@ interface DocumentViewerProps {
 }
 
 export default function DocumentViewer({ document, onExit, overrideImageUrls }: DocumentViewerProps) {
-  const { largeHitTargets, playbackSpeed, language } = useSettings();
+  const { largeHitTargets, playbackSpeed, language, voice } = useSettings();
   const { toast } = useToast();
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [scale, setScale] = useState(1);
@@ -85,13 +85,24 @@ export default function DocumentViewer({ document, onExit, overrideImageUrls }: 
 
     if (voices.length > 0) {
         const langVoices = voices.filter(v => v.lang.startsWith(language.split('-')[0]));
-        // Prefer a female voice, but fall back to any voice for the language.
-        const selectedVoice = langVoices.find(v => /female/i.test(v.name)) || langVoices[0];
+        
+        let selectedVoice: SpeechSynthesisVoice | undefined;
+
+        if (voice === 'male') {
+            // Prioritize voices with "male" in the name, but fall back to any non-female voice.
+            const maleVoices = langVoices.filter(v => /male/i.test(v.name));
+            const otherVoices = langVoices.filter(v => !/female/i.test(v.name));
+            selectedVoice = maleVoices[0] || otherVoices[0];
+        } else { // 'female' or default
+            // Prefer a female voice, but fall back to any voice for the language.
+            const femaleVoices = langVoices.filter(v => /female/i.test(v.name));
+            selectedVoice = femaleVoices[0] || langVoices[0];
+        }
         
         utterance.voice = selectedVoice || voices[0];
 
         if (!utterance.voice) {
-            console.warn(`No voice found for language '${language}'. Using browser default.`);
+            console.warn(`No voice found for language '${language}' and gender '${voice}'. Using browser default.`);
         }
     }
 

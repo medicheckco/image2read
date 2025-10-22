@@ -22,6 +22,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useSettings } from "@/contexts/settings-context";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 
 export function SettingsSheet({ children }: { children: React.ReactNode }) {
   const {
@@ -31,6 +32,8 @@ export function SettingsSheet({ children }: { children: React.ReactNode }) {
     setPlaybackSpeed,
     largeHitTargets,
     setLargeHitTargets,
+    voice,
+    setVoice,
   } = useSettings();
 
   return (
@@ -57,6 +60,26 @@ export function SettingsSheet({ children }: { children: React.ReactNode }) {
                 <SelectItem value="fr-FR">French</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <Separator />
+          
+          <div className="grid gap-3">
+            <Label>Voice</Label>
+            <RadioGroup
+              value={voice}
+              onValueChange={(value) => setVoice(value as "female" | "male")}
+              className="flex space-x-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="female" id="female-voice" />
+                <Label htmlFor="female-voice">Female</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="male" id="male-voice" />
+                <Label htmlFor="male-voice">Male</Label>
+              </div>
+            </RadioGroup>
           </div>
 
           <Separator />
