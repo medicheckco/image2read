@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
@@ -30,10 +31,27 @@ export default function DocumentViewer({ document, onExit, overrideImageUrls }: 
   const [scale, setScale] = useState(1);
   const [activeWord, setActiveWord] = useState<string | null>(null);
   const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setSpeechSynthesis(window.speechSynthesis);
+    const synth = window.speechSynthesis;
+    setSpeechSynthesis(synth);
+
+    const loadVoices = () => {
+        const availableVoices = synth.getVoices();
+        if (availableVoices.length > 0) {
+            setVoices(availableVoices);
+        }
+    };
+
+    // Voices may load asynchronously.
+    loadVoices();
+    synth.onvoiceschanged = loadVoices;
+
+    return () => {
+        synth.onvoiceschanged = null;
+    };
   }, []);
 
   const currentPage = document.pages[currentPageIndex];
@@ -57,23 +75,25 @@ export default function DocumentViewer({ document, onExit, overrideImageUrls }: 
     utterance.lang = language;
     utterance.rate = playbackSpeed;
 
-    const availableVoices = speechSynthesis.getVoices();
-    let selectedVoice = null;
-    if (voice === 'male') {
-        selectedVoice = availableVoices.find(v => 
-            v.lang.startsWith(language.split('-')[0]) && /male/i.test(v.name)
-        );
-    } else { // female or default
-        selectedVoice = availableVoices.find(v => 
-            v.lang.startsWith(language.split('-')[0]) && /female/i.test(v.name)
-        );
+    if (voices.length > 0) {
+        let selectedVoice = null;
+        if (voice === 'male') {
+            selectedVoice = voices.find(v => 
+                v.lang.startsWith(language.split('-')[0]) && /male/i.test(v.name)
+            );
+        } else { // female or default
+            selectedVoice = voices.find(v => 
+                v.lang.startsWith(language.split('-')[0]) && /female/i.test(v.name)
+            );
+        }
+        
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        } else {
+            console.warn(`No '${voice}' voice found for language '${language}'. Using default.`);
+        }
     }
-    
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-    } else {
-        console.warn(`No '${voice}' voice found for language '${language}'. Using default.`);
-    }
+
 
     toast({
         title: (
