@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
   ArrowLeft,
@@ -20,16 +20,17 @@ import { useToast } from "@/hooks/use-toast";
 interface DocumentViewerProps {
   document: MockDocument;
   onExit: () => void;
-  overrideImageUrl?: string;
+  overrideImageUrls?: string[];
 }
 
-export default function DocumentViewer({ document, onExit, overrideImageUrl }: DocumentViewerProps) {
+export default function DocumentViewer({ document, onExit, overrideImageUrls }: DocumentViewerProps) {
   const { largeHitTargets, playbackSpeed, voice, language } = useSettings();
   const { toast } = useToast();
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [scale, setScale] = useState(1);
   const [activeWord, setActiveWord] = useState<string | null>(null);
   const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setSpeechSynthesis(window.speechSynthesis);
@@ -38,7 +39,7 @@ export default function DocumentViewer({ document, onExit, overrideImageUrl }: D
   const currentPage = document.pages[currentPageIndex];
   const pageImage = PlaceHolderImages.find((img) => img.id === currentPage.imageId);
   
-  const imageUrl = overrideImageUrl || pageImage?.imageUrl;
+  const imageUrl = overrideImageUrls ? overrideImageUrls[currentPageIndex] : pageImage?.imageUrl;
 
   const speak = (text: string) => {
     if (!speechSynthesis) {
@@ -89,22 +90,40 @@ export default function DocumentViewer({ document, onExit, overrideImageUrl }: D
   const handleNextPage = () => {
     if (currentPageIndex < document.pages.length - 1) {
       setCurrentPageIndex(currentPageIndex + 1);
+      setScale(1); // Reset zoom on page change
     }
   };
 
   const handlePrevPage = () => {
     if (currentPageIndex > 0) {
       setCurrentPageIndex(currentPageIndex - 1);
+      setScale(1); // Reset zoom on page change
     }
   };
 
   const hitboxClass = useMemo(() => {
     return largeHitTargets ? "p-1" : "p-0";
   }, [largeHitTargets]);
+  
+  const [imageSize, setImageSize] = useState({ width: 800, height: 1100 });
+  
+  useEffect(() => {
+    if (imageUrl) {
+        const img = new window.Image();
+        img.src = imageUrl;
+        img.onload = () => {
+            setImageSize({ width: img.width, height: img.height });
+        };
+    }
+  }, [imageUrl]);
 
   if (!imageUrl) {
     return <div className="flex h-screen items-center justify-center">Error loading document page.</div>;
   }
+
+  const containerWidth = 800; // base width for our viewing area
+  const aspectRatio = imageSize.width / imageSize.height;
+  const containerHeight = containerWidth / aspectRatio;
 
   return (
     <div className="flex h-full min-h-[calc(100vh-4rem)] flex-col items-center justify-start bg-background/80 p-4">
@@ -123,15 +142,22 @@ export default function DocumentViewer({ document, onExit, overrideImageUrl }: D
         </Button>
       </div>
 
-      <div className="relative w-full max-w-4xl overflow-auto rounded-lg shadow-2xl">
-        <div className="relative mx-auto" style={{ width: 800 * scale, height: 1100 * scale }}>
+      <div className="relative w-full max-w-4xl overflow-auto rounded-lg shadow-2xl" style={{ maxHeight: 'calc(100vh - 10rem)'}}>
+        <div 
+          ref={imageContainerRef}
+          className="relative mx-auto" 
+          style={{ 
+            width: containerWidth * scale, 
+            height: containerHeight * scale 
+          }}
+        >
           <Image
             src={imageUrl}
             alt={pageImage?.description || "Uploaded document"}
-            width={800}
-            height={1100}
+            width={imageSize.width}
+            height={imageSize.height}
             className="pointer-events-none select-none"
-            style={{ width: '100%', height: '100%' }}
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             priority
           />
           {currentPage.textElements.map((word) => (

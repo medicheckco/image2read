@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { MockDocument, TextElement } from "@/lib/types";
+import type { MockDocument, TextElement, DocumentPage } from "@/lib/types";
 import { MOCK_DOC } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 
@@ -69,13 +69,13 @@ export default function Home() {
             {
               id: `page-1`,
               pageNumber: 1,
-              imageId: "uploaded-image",
+              imageId: "uploaded-image", // This will be overridden
               textElements: textElements,
             },
           ],
         };
-
-        (newDoc as any).uploadedImageUrl = imageUrl;
+        
+        (newDoc as any).uploadedImageUrls = [imageUrl];
         setDocument(newDoc);
         setIsLoading(false);
       };
@@ -97,6 +97,94 @@ export default function Home() {
       setIsLoading(false);
     }
   };
+
+  const processPdf = async (file: File) => {
+    const fileReader = new FileReader();
+    fileReader.onload = async () => {
+      try {
+        const typedarray = new Uint8Array(fileReader.result as ArrayBuffer);
+        const pdf = await pdfjsLib.getDocument(typedarray).promise;
+        const numPages = pdf.numPages;
+        const pages: DocumentPage[] = [];
+        const pageImageUrls: string[] = [];
+
+        const canvas = canvasRef.current;
+        if (!canvas) {
+          throw new Error("Canvas element not found.");
+        }
+        const context = canvas.getContext("2d");
+        if (!context) {
+          throw new Error("Failed to get canvas context");
+        }
+
+        for (let i = 1; i <= numPages; i++) {
+          setLoadingMessage(`Processing Page ${i} of ${numPages}...`);
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: 1.5 });
+          
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          await page.render({ canvasContext: context, viewport: viewport }).promise;
+          const imageUrl = canvas.toDataURL();
+          pageImageUrls.push(imageUrl);
+
+          setLoadingMessage(`Recognizing text on page ${i}...`);
+          const result = await Tesseract.recognize(imageUrl, "eng", {
+            logger: (m) => {
+              if (m.status === "recognizing text") {
+                const progress = (m.progress * 100).toFixed(0);
+                setLoadingMessage(
+                  `Page ${i}/${numPages}: Recognizing Text... ${progress}%`
+                );
+              }
+            },
+          });
+          
+          const { data: { words } } = result;
+
+          const textElements: TextElement[] = words.map((word, index) => {
+            const { bbox } = word;
+            return {
+              id: `word-p${i}-${index}-${Date.now()}`,
+              text: word.text,
+              x: (bbox.x0 / viewport.width) * 100,
+              y: (bbox.y0 / viewport.height) * 100,
+              width: ((bbox.x1 - bbox.x0) / viewport.width) * 100,
+              height: ((bbox.y1 - bbox.y0) / viewport.height) * 100,
+            };
+          });
+
+          pages.push({
+            id: `page-${i}`,
+            pageNumber: i,
+            imageId: `pdf-page-${i}`,
+            textElements: textElements,
+          });
+        }
+        
+        const newDoc: MockDocument = {
+            id: `doc-${Date.now()}`,
+            name: file.name,
+            pages: pages,
+        };
+
+        (newDoc as any).uploadedImageUrls = pageImageUrls;
+        setDocument(newDoc);
+        setIsLoading(false);
+
+      } catch (error) {
+        console.error("PDF Processing Error:", error);
+        toast({
+          variant: "destructive",
+          title: "PDF Processing Failed",
+          description: "Could not read or render the PDF file.",
+        });
+        setIsLoading(false);
+      }
+    };
+    fileReader.readAsArrayBuffer(file);
+  }
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -120,40 +208,7 @@ export default function Home() {
         processTesseract(imageUrl, file.name);
       } else if (isPdf) {
         setLoadingMessage("Rendering PDF...");
-        const fileReader = new FileReader();
-        fileReader.onload = async () => {
-          try {
-            const typedarray = new Uint8Array(fileReader.result as ArrayBuffer);
-            const pdf = await pdfjsLib.getDocument(typedarray).promise;
-            const page = await pdf.getPage(1); // Process first page
-            const viewport = page.getViewport({ scale: 1.5 });
-            const canvas = canvasRef.current;
-            if (!canvas) {
-                throw new Error("Canvas element not found.");
-            }
-            const context = canvas.getContext("2d");
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-
-            if (!context) {
-              throw new Error("Failed to get canvas context");
-            }
-            
-            await page.render({ canvasContext: context, viewport: viewport }).promise;
-            
-            processTesseract(canvas.toDataURL(), file.name);
-
-          } catch (error) {
-            console.error("PDF Processing Error:", error);
-            toast({
-              variant: "destructive",
-              title: "PDF Processing Failed",
-              description: "Could not read or render the PDF file.",
-            });
-            setIsLoading(false);
-          }
-        };
-        fileReader.readAsArrayBuffer(file);
+        processPdf(file);
       }
     }
   };
@@ -163,12 +218,12 @@ export default function Home() {
   };
 
   if (document) {
-    const imageUrl = (document as any).uploadedImageUrl || undefined;
+    const imageUrls = (document as any).uploadedImageUrls || undefined;
     return (
       <DocumentViewer
         document={document}
         onExit={() => setDocument(null)}
-        overrideImageUrl={imageUrl}
+        overrideImageUrls={imageUrls}
       />
     );
   }
