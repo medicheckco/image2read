@@ -46,7 +46,9 @@ export default function DocumentViewer({ document, onExit, overrideImageUrls }: 
     };
 
     // Voices may load asynchronously.
-    loadVoices();
+    if (synth.getVoices().length > 0) {
+      loadVoices();
+    }
     synth.onvoiceschanged = loadVoices;
 
     return () => {
@@ -76,21 +78,23 @@ export default function DocumentViewer({ document, onExit, overrideImageUrls }: 
     utterance.rate = playbackSpeed;
 
     if (voices.length > 0) {
+        const langVoices = voices.filter(v => v.lang.startsWith(language.split('-')[0]));
         let selectedVoice = null;
+        
         if (voice === 'male') {
-            selectedVoice = voices.find(v => 
-                v.lang.startsWith(language.split('-')[0]) && /male/i.test(v.name)
-            );
-        } else { // female or default
-            selectedVoice = voices.find(v => 
-                v.lang.startsWith(language.split('-')[0]) && /female/i.test(v.name)
-            );
+            // Prioritize voices explicitly named 'male', then any non-female voice.
+            selectedVoice = 
+                langVoices.find(v => /male/i.test(v.name)) || 
+                langVoices.find(v => !/female/i.test(v.name));
+        } else { // 'female' or default
+            selectedVoice = langVoices.find(v => /female/i.test(v.name));
         }
         
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-        } else {
-            console.warn(`No '${voice}' voice found for language '${language}'. Using default.`);
+        // Fallback to any voice for the language if specific gender not found
+        utterance.voice = selectedVoice || langVoices[0] || voices[0];
+
+        if (!utterance.voice) {
+            console.warn(`No voice found for language '${language}'. Using browser default.`);
         }
     }
 
