@@ -26,6 +26,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Processing...");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
 
   const processTesseract = async (imageUrl: string, fileName: string) => {
@@ -126,7 +127,10 @@ export default function Home() {
             const pdf = await pdfjsLib.getDocument(typedarray).promise;
             const page = await pdf.getPage(1); // Process first page
             const viewport = page.getViewport({ scale: 1.5 });
-            const canvas = document.createElement("canvas");
+            const canvas = canvasRef.current;
+            if (!canvas) {
+                throw new Error("Canvas element not found.");
+            }
             const context = canvas.getContext("2d");
             canvas.height = viewport.height;
             canvas.width = viewport.width;
@@ -171,6 +175,7 @@ export default function Home() {
 
   return (
     <div className="container mx-auto flex h-full min-h-[calc(100vh-4rem)] items-center justify-center p-4">
+      <canvas ref={canvasRef} className="hidden" />
       <Card className="w-full max-w-lg text-center shadow-xl">
         <CardHeader>
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
