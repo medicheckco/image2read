@@ -15,7 +15,6 @@ import {
 import type { MockDocument } from "@/lib/types";
 import { MOCK_DOC } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
-import { processDocument } from "@/ai/flows/process-document";
 
 export default function Home() {
   const [document, setDocument] = useState<MockDocument | null>(null);
@@ -40,41 +39,26 @@ export default function Home() {
       const reader = new FileReader();
       reader.onload = async (e) => {
         const imageUrl = e.target?.result as string;
-        try {
-          const result = await processDocument({
-            photoDataUri: imageUrl,
-          });
-
-          const newDoc: MockDocument = {
-            id: `doc-${Date.now()}`,
+        
+        // Revert to using mock document structure but with the new image.
+        const newDoc: MockDocument = {
+            ...MOCK_DOC,
             name: file.name,
-            pages: [
-              {
-                id: `page-1`,
-                pageNumber: 1,
-                imageId: "uploaded-image",
-                characters: result.characters.map((char, index) => ({
-                  ...char,
-                  id: `char-${index}`,
-                })),
-              },
-            ],
-          };
+        };
 
-          // This is a bit of a hack to temporarily store the uploaded image URL
-          (newDoc as any).uploadedImageUrl = imageUrl;
-          setDocument(newDoc);
-        } catch (error) {
-          console.error("Error processing document:", error);
-          toast({
-            variant: "destructive",
-            title: "AI Processing Failed",
-            description: "Could not process the document. Please try again.",
-          });
-        } finally {
-          setIsLoading(false);
-        }
+        // This is a bit of a hack to temporarily store the uploaded image URL
+        (newDoc as any).uploadedImageUrl = imageUrl;
+        setDocument(newDoc);
+        setIsLoading(false);
       };
+      reader.onerror = () => {
+          toast({
+              variant: "destructive",
+              title: "File Reading Failed",
+              description: "Could not read the selected file.",
+          });
+          setIsLoading(false);
+      }
       reader.readAsDataURL(file);
     }
   };
@@ -128,7 +112,7 @@ export default function Home() {
             ) : (
               <UploadCloud className="mr-2 h-6 w-6" />
             )}
-            {isLoading ? "Analyzing Document..." : "Upload and Start Learning"}
+            {isLoading ? "Processing Image..." : "Upload and Start Learning"}
           </Button>
         </CardContent>
         <CardFooter className="flex-col items-center justify-center text-sm text-muted-foreground">
