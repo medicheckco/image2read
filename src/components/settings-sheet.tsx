@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -17,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
@@ -27,8 +27,6 @@ export function SettingsSheet({ children }: { children: React.ReactNode }) {
   const {
     language,
     setLanguage,
-    voice,
-    setVoice,
     playbackSpeed,
     setPlaybackSpeed,
     largeHitTargets,
@@ -62,24 +60,6 @@ export function SettingsSheet({ children }: { children: React.ReactNode }) {
           </div>
 
           <Separator />
-
-          <div className="grid gap-3">
-            <Label>Voice</Label>
-            <RadioGroup
-              value={voice}
-              onValueChange={(value) => setVoice(value as "male" | "female")}
-              className="flex space-x-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="female" id="female" />
-                <Label htmlFor="female">Female</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="male" id="male" />
-                <Label htmlFor="male">Male</Label>
-              </div>
-            </RadioGroup>
-          </div>
 
           <div className="grid gap-3">
             <Label htmlFor="playback-speed">Playback Speed: {playbackSpeed}x</Label>
