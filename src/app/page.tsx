@@ -145,7 +145,7 @@ export default function Home() {
         for (let i = 1; i <= numPages; i++) {
           setLoadingMessage(`Processing Page ${i} of ${numPages}...`);
           const page = await pdf.getPage(i);
-          const viewport = page.getViewport({ scale: 1.5 });
+          const viewport = page.getViewport({ scale: 2.5 });
           
           canvas.height = viewport.height;
           canvas.width = viewport.width;
@@ -308,5 +308,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
