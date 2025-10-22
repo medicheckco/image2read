@@ -58,10 +58,16 @@ export default function DocumentViewer({ document, onExit, overrideImageUrls }: 
     utterance.rate = playbackSpeed;
 
     const availableVoices = speechSynthesis.getVoices();
-    const selectedVoice = availableVoices.find(v => 
-        v.lang.startsWith(language.split('-')[0]) && 
-        (voice === 'male' ? /male/i.test(v.name) : /female/i.test(v.name) || !/male/i.test(v.name))
-    );
+    let selectedVoice = null;
+    if (voice === 'male') {
+        selectedVoice = availableVoices.find(v => 
+            v.lang.startsWith(language.split('-')[0]) && /male/i.test(v.name)
+        );
+    } else { // female or default
+        selectedVoice = availableVoices.find(v => 
+            v.lang.startsWith(language.split('-')[0]) && /female/i.test(v.name)
+        );
+    }
     
     if (selectedVoice) {
       utterance.voice = selectedVoice;
