@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Tesseract from "tesseract.js";
 import { Loader2, UploadCloud, Sparkles } from "lucide-react";
 import DocumentViewer from "@/components/document-viewer";
 import { Button } from "@/components/ui/button";
@@ -12,13 +13,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { MockDocument } from "@/lib/types";
+import type { MockDocument, Character } from "@/lib/types";
 import { MOCK_DOC } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const [document, setDocument] = useState<MockDocument | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Processing Image...");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -36,30 +38,77 @@ export default function Home() {
 
       setIsLoading(true);
 
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const imageUrl = e.target?.result as string;
-        
-        // Revert to using mock document structure but with the new image.
-        const newDoc: MockDocument = {
-            ...MOCK_DOC,
-            name: file.name,
-        };
+      const imageUrl = URL.createObjectURL(file);
 
-        // This is a bit of a hack to temporarily store the uploaded image URL
-        (newDoc as any).uploadedImageUrl = imageUrl;
-        setDocument(newDoc);
-        setIsLoading(false);
-      };
-      reader.onerror = () => {
-          toast({
-              variant: "destructive",
-              title: "File Reading Failed",
-              description: "Could not read the selected file.",
+      setLoadingMessage("Analyzing document with Tesseract...");
+
+      try {
+        const result = await Tesseract.recognize(imageUrl, "eng", {
+          logger: (m) => {
+            if (m.status === "recognizing text") {
+              const progress = (m.progress * 100).toFixed(0);
+              setLoadingMessage(`Recognizing Text... ${progress}%`);
+            }
+          },
+        });
+
+        const {
+          data: { symbols },
+        } = result;
+
+        const image = new Image();
+        image.src = imageUrl;
+        image.onload = () => {
+          const { width: imgWidth, height: imgHeight } = image;
+
+          const characters: Character[] = symbols
+          .filter(sym => sym.text.trim() !== '')
+          .map((sym, index) => {
+            return {
+              id: `char-${index}-${Date.now()}`,
+              char: sym.text,
+              x: (sym.bbox.x0 / imgWidth) * 100,
+              y: (sym.bbox.y0 / imgHeight) * 100,
+              width: ((sym.bbox.x1 - sym.bbox.x0) / imgWidth) * 100,
+              height: ((sym.bbox.y1 - sym.bbox.y0) / imgHeight) * 100,
+            };
           });
+
+          const newDoc: MockDocument = {
+            id: `doc-${Date.now()}`,
+            name: file.name,
+            pages: [
+              {
+                id: `page-1`,
+                pageNumber: 1,
+                imageId: "uploaded-image",
+                characters: characters,
+              },
+            ],
+          };
+
+          (newDoc as any).uploadedImageUrl = imageUrl;
+          setDocument(newDoc);
           setIsLoading(false);
+        }
+        image.onerror = () => {
+             toast({
+              variant: "destructive",
+              title: "Image Load Failed",
+              description: "Could not load image dimensions.",
+            });
+            setIsLoading(false);
+        }
+
+      } catch (error) {
+        console.error("Tesseract Error:", error);
+        toast({
+          variant: "destructive",
+          title: "OCR Failed",
+          description: "Could not process the image with Tesseract.",
+        });
+        setIsLoading(false);
       }
-      reader.readAsDataURL(file);
     }
   };
 
@@ -112,7 +161,7 @@ export default function Home() {
             ) : (
               <UploadCloud className="mr-2 h-6 w-6" />
             )}
-            {isLoading ? "Processing Image..." : "Upload and Start Learning"}
+            {isLoading ? loadingMessage : "Upload and Start Learning"}
           </Button>
         </CardContent>
         <CardFooter className="flex-col items-center justify-center text-sm text-muted-foreground">
