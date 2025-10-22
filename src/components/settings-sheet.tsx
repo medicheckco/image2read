@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -22,7 +22,6 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useSettings } from "@/contexts/settings-context";
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 
 export function SettingsSheet({ children }: { children: React.ReactNode }) {
   const {
@@ -32,9 +31,41 @@ export function SettingsSheet({ children }: { children: React.ReactNode }) {
     setPlaybackSpeed,
     largeHitTargets,
     setLargeHitTargets,
-    voice,
-    setVoice,
+    voiceName,
+    setVoiceName,
   } = useSettings();
+
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+
+  useEffect(() => {
+    const synth = window.speechSynthesis;
+    const loadVoices = () => {
+      const voices = synth.getVoices();
+      const filteredVoices = voices.filter(v => v.lang.startsWith(language.split('-')[0]));
+      setAvailableVoices(filteredVoices);
+      if (!voiceName && filteredVoices.length > 0) {
+        setVoiceName(filteredVoices[0].name);
+      }
+    };
+
+    // Voices may load asynchronously.
+    if (synth.getVoices().length > 0) {
+      loadVoices();
+    } else {
+        synth.onvoiceschanged = loadVoices;
+    }
+
+    return () => {
+        synth.onvoiceschanged = null;
+    };
+  }, [language, voiceName, setVoiceName]);
+
+
+  const handleLanguageChange = (newLang: string) => {
+    setLanguage(newLang);
+    // Reset voice when language changes
+    setVoiceName("");
+  }
 
   return (
     <Sheet>
@@ -49,7 +80,7 @@ export function SettingsSheet({ children }: { children: React.ReactNode }) {
         <div className="grid gap-6 py-6">
           <div className="grid gap-3">
             <Label htmlFor="language">Language</Label>
-            <Select value={language} onValueChange={setLanguage}>
+            <Select value={language} onValueChange={handleLanguageChange}>
               <SelectTrigger id="language">
                 <SelectValue placeholder="Select language" />
               </SelectTrigger>
@@ -65,21 +96,25 @@ export function SettingsSheet({ children }: { children: React.ReactNode }) {
           <Separator />
           
           <div className="grid gap-3">
-            <Label>Voice</Label>
-            <RadioGroup
-              value={voice}
-              onValueChange={(value) => setVoice(value as "female" | "male")}
-              className="flex space-x-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="female" id="female-voice" />
-                <Label htmlFor="female-voice">Female</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="male" id="male-voice" />
-                <Label htmlFor="male-voice">Male</Label>
-              </div>
-            </RadioGroup>
+            <Label htmlFor="voice">Voice</Label>
+            <Select value={voiceName} onValueChange={setVoiceName} disabled={availableVoices.length === 0}>
+                <SelectTrigger id="voice">
+                    <SelectValue placeholder="Select voice" />
+                </SelectTrigger>
+                <SelectContent>
+                    {availableVoices.length > 0 ? (
+                        availableVoices.map((voice) => (
+                            <SelectItem key={voice.name} value={voice.name}>
+                                {voice.name} ({voice.lang})
+                            </SelectItem>
+                        ))
+                    ) : (
+                        <SelectItem value="loading" disabled>
+                           Loading voices...
+                        </SelectItem>
+                    )}
+                </SelectContent>
+            </Select>
           </div>
 
           <Separator />

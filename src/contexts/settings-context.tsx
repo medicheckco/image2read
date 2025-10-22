@@ -3,8 +3,6 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
-type VoiceGender = "female" | "male";
-
 interface Settings {
   language: string;
   setLanguage: (language: string) => void;
@@ -12,8 +10,8 @@ interface Settings {
   setPlaybackSpeed: (speed: number) => void;
   largeHitTargets: boolean;
   setLargeHitTargets: (enabled: boolean) => void;
-  voice: VoiceGender;
-  setVoice: (voice: VoiceGender) => void;
+  voiceName: string;
+  setVoiceName: (voiceName: string) => void;
 }
 
 const defaultSettings: Settings = {
@@ -23,8 +21,8 @@ const defaultSettings: Settings = {
   setPlaybackSpeed: () => {},
   largeHitTargets: false,
   setLargeHitTargets: () => {},
-  voice: "female",
-  setVoice: () => {},
+  voiceName: "", // Empty string means use browser default
+  setVoiceName: () => {},
 };
 
 const SettingsContext = createContext<Settings>(defaultSettings);
@@ -41,7 +39,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState(defaultSettings.language);
   const [playbackSpeed, setPlaybackSpeed] = useState(defaultSettings.playbackSpeed);
   const [largeHitTargets, setLargeHitTargets] = useState(defaultSettings.largeHitTargets);
-  const [voice, setVoice] = useState<VoiceGender>(defaultSettings.voice);
+  const [voiceName, setVoiceName] = useState<string>(defaultSettings.voiceName);
 
   const value = {
     language,
@@ -50,8 +48,8 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     setPlaybackSpeed,
     largeHitTargets,
     setLargeHitTargets,
-    voice,
-    setVoice,
+    voiceName,
+    setVoiceName,
   };
 
   return (

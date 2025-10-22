@@ -25,36 +25,17 @@ interface DocumentViewerProps {
 }
 
 export default function DocumentViewer({ document, onExit, overrideImageUrls }: DocumentViewerProps) {
-  const { largeHitTargets, playbackSpeed, language, voice } = useSettings();
+  const { largeHitTargets, playbackSpeed, language, voiceName } = useSettings();
   const { toast } = useToast();
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [scale, setScale] = useState(1);
   const [activeWord, setActiveWord] = useState<string | null>(null);
   const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const synth = window.speechSynthesis;
     setSpeechSynthesis(synth);
-
-    const loadVoices = () => {
-        const availableVoices = synth.getVoices();
-        if (availableVoices.length > 0) {
-            setVoices(availableVoices);
-        }
-    };
-
-    // Voices may load asynchronously.
-    if (synth.getVoices().length > 0) {
-      loadVoices();
-    } else {
-        synth.onvoiceschanged = loadVoices;
-    }
-
-    return () => {
-        synth.onvoiceschanged = null;
-    };
   }, []);
 
   const currentPage = document.pages[currentPageIndex];
@@ -83,26 +64,13 @@ export default function DocumentViewer({ document, onExit, overrideImageUrls }: 
     utterance.lang = language;
     utterance.rate = playbackSpeed;
 
+    const voices = speechSynthesis.getVoices();
     if (voices.length > 0) {
-        const langVoices = voices.filter(v => v.lang.startsWith(language.split('-')[0]));
-        
-        let selectedVoice: SpeechSynthesisVoice | undefined;
-
-        if (voice === 'male') {
-            // Prioritize voices with "male" in the name, but fall back to any non-female voice.
-            const maleVoices = langVoices.filter(v => /male/i.test(v.name));
-            const otherVoices = langVoices.filter(v => !/female/i.test(v.name));
-            selectedVoice = maleVoices[0] || otherVoices[0];
-        } else { // 'female' or default
-            // Prefer a female voice, but fall back to any voice for the language.
-            const femaleVoices = langVoices.filter(v => /female/i.test(v.name));
-            selectedVoice = femaleVoices[0] || langVoices[0];
-        }
-        
-        utterance.voice = selectedVoice || voices[0];
+        const selectedVoice = voices.find(v => v.name === voiceName);
+        utterance.voice = selectedVoice || null; // Fallback to browser default if not found
 
         if (!utterance.voice) {
-            console.warn(`No voice found for language '${language}' and gender '${voice}'. Using browser default.`);
+            console.warn(`Voice '${voiceName}' not found. Using browser default for language '${language}'.`);
         }
     }
 
