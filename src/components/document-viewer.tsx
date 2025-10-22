@@ -20,9 +20,10 @@ import { useToast } from "@/hooks/use-toast";
 interface DocumentViewerProps {
   document: MockDocument;
   onExit: () => void;
+  overrideImageUrl?: string;
 }
 
-export default function DocumentViewer({ document, onExit }: DocumentViewerProps) {
+export default function DocumentViewer({ document, onExit, overrideImageUrl }: DocumentViewerProps) {
   const { largeHitTargets, playbackMode } = useSettings();
   const { toast } = useToast();
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -31,6 +32,8 @@ export default function DocumentViewer({ document, onExit }: DocumentViewerProps
 
   const currentPage = document.pages[currentPageIndex];
   const pageImage = PlaceHolderImages.find((img) => img.id === currentPage.imageId);
+  
+  const imageUrl = overrideImageUrl || pageImage?.imageUrl;
 
   const handleCharClick = (char: Character) => {
     const message = `Playing ${playbackMode === 'phoneme' ? 'sound for' : 'letter name'}: ${char.char}`;
@@ -63,7 +66,7 @@ export default function DocumentViewer({ document, onExit }: DocumentViewerProps
     return largeHitTargets ? "p-2" : "p-0.5";
   }, [largeHitTargets]);
 
-  if (!pageImage) {
+  if (!imageUrl) {
     return <div>Error loading document page.</div>;
   }
 
@@ -87,8 +90,8 @@ export default function DocumentViewer({ document, onExit }: DocumentViewerProps
       <div className="relative w-full max-w-4xl overflow-auto rounded-lg shadow-2xl">
         <div className="relative mx-auto" style={{ width: 800 * scale, height: 1100 * scale }}>
           <Image
-            src={pageImage.imageUrl}
-            alt={pageImage.description}
+            src={imageUrl}
+            alt={pageImage?.description || "Uploaded document"}
             width={800}
             height={1100}
             className="pointer-events-none select-none"
