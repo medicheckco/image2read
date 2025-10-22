@@ -31,11 +31,26 @@ export default function DocumentViewer({ document, onExit, overrideImageUrls }: 
   const [scale, setScale] = useState(1);
   const [activeWord, setActiveWord] = useState<string | null>(null);
   const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const synth = window.speechSynthesis;
     setSpeechSynthesis(synth);
+
+    const loadVoices = () => {
+        setAvailableVoices(synth.getVoices());
+    };
+
+    if (synth.getVoices().length > 0) {
+        loadVoices();
+    } else {
+        synth.onvoiceschanged = loadVoices;
+    }
+    
+    return () => {
+        synth.onvoiceschanged = null;
+    }
   }, []);
 
   const currentPage = document.pages[currentPageIndex];
@@ -64,14 +79,17 @@ export default function DocumentViewer({ document, onExit, overrideImageUrls }: 
     utterance.lang = language;
     utterance.rate = playbackSpeed;
 
-    const voices = speechSynthesis.getVoices();
-    if (voices.length > 0) {
-        const selectedVoice = voices.find(v => v.name === voiceName);
-        utterance.voice = selectedVoice || null; // Fallback to browser default if not found
+    if (availableVoices.length > 0) {
+        let selectedVoice = availableVoices.find(v => v.name === voiceName);
 
-        if (!utterance.voice) {
-            console.warn(`Voice '${voiceName}' not found. Using browser default for language '${language}'.`);
+        // Fallback logic if a specific voice isn't found
+        if (!selectedVoice) {
+            console.warn(`Voice '${voiceName}' not found. Searching for a fallback for language '${language}'.`);
+            // Try to find any voice for the selected language
+            selectedVoice = availableVoices.find(v => v.lang.startsWith(language));
         }
+
+        utterance.voice = selectedVoice || null; 
     }
 
 
@@ -106,10 +124,6 @@ export default function DocumentViewer({ document, onExit, overrideImageUrls }: 
       setScale(1); // Reset zoom on page change
     }
   };
-
-  const hitboxClass = useMemo(() => {
-    return largeHitTargets ? "p-1" : "p-0";
-  }, [largeHitTargets]);
   
   const [imageSize, setImageSize] = useState({ width: 800, height: 1100 });
   
@@ -166,29 +180,37 @@ export default function DocumentViewer({ document, onExit, overrideImageUrls }: 
             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             priority
           />
-          {currentPage.textElements.map((word) => (
-            <div
-              key={word.id}
-              className={cn("absolute", hitboxClass)}
-              style={{
-                left: `${word.x}%`,
-                top: `${word.y}%`,
-                width: `${word.width}%`,
-                height: `${word.height}%`,
-              }}
-            >
-              <button
-                aria-label={`Word ${word.text}`}
-                onClick={() => handleWordClick(word)}
-                className={cn(
-                  "h-full w-full cursor-pointer rounded-sm transition-all duration-300",
-                  activeWord === word.id
-                    ? "scale-105 bg-accent/50"
-                    : "hover:bg-accent/30"
-                )}
-              />
-            </div>
-          ))}
+          {currentPage.textElements.map((word) => {
+            const hitboxStyle = largeHitTargets ? {
+                transform: 'scale(1.5)', // Makes the clickable area 50% larger
+                transformOrigin: 'center'
+            } : {};
+            
+            return (
+                <div
+                key={word.id}
+                className="absolute"
+                style={{
+                    left: `${word.x}%`,
+                    top: `${word.y}%`,
+                    width: `${word.width}%`,
+                    height: `${word.height}%`,
+                }}
+                >
+                <button
+                    aria-label={`Word ${word.text}`}
+                    onClick={() => handleWordClick(word)}
+                    className={cn(
+                        "h-full w-full cursor-pointer rounded-sm transition-all duration-300",
+                        activeWord === word.id
+                        ? "scale-105 bg-accent/50"
+                        : "hover:bg-accent/30"
+                    )}
+                    style={hitboxStyle}
+                />
+                </div>
+            )
+          })}
         </div>
       </div>
 
