@@ -113,7 +113,19 @@ export default function Home() {
       canvas.height = upscaledHeight;
       context.drawImage(image, 0, 0, upscaledWidth, upscaledHeight);
 
-      const upscaledImageUrl = canvas.toDataURL();
+      // Pre-processing for better OCR
+      const imageData = context.getImageData(0, 0, upscaledWidth, upscaledHeight);
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+          const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          data[i] = avg; // red
+          data[i + 1] = avg; // green
+          data[i + 2] = avg; // blue
+      }
+      context.putImageData(imageData, 0, 0);
+
+
+      const upscaledImageUrl = canvas.toDataURL("image/jpeg", 1.0);
       
       processTesseract(upscaledImageUrl, file.name, upscaledWidth, upscaledHeight);
     };
@@ -151,7 +163,19 @@ export default function Home() {
           canvas.width = viewport.width;
 
           await page.render({ canvasContext: context, viewport: viewport }).promise;
-          const imageUrl = canvas.toDataURL();
+
+          // Pre-processing for better OCR
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+          for (let j = 0; j < data.length; j += 4) {
+            const avg = (data[j] + data[j + 1] + data[j + 2]) / 3;
+            data[j] = avg; // red
+            data[j + 1] = avg; // green
+            data[j + 2] = avg; // blue
+          }
+          context.putImageData(imageData, 0, 0);
+
+          const imageUrl = canvas.toDataURL("image/jpeg", 1.0);
           pageImageUrls.push(imageUrl);
 
           setLoadingMessage(`Recognizing text on page ${i}...`);
@@ -317,3 +341,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
