@@ -316,17 +316,6 @@ export default function Home() {
         </CardContent>
         <CardFooter className="flex-col items-center justify-center text-sm text-muted-foreground">
           <p>Supported formats: JPEG, PNG, PDF</p>
-          <p className="mt-4">
-            Or you can still{" "}
-            <button
-              onClick={() => setDocument(MOCK_DOC)}
-              className="text-primary underline"
-              disabled={isLoading}
-            >
-              use the sample document
-            </button>
-            .
-          </p>
         </CardFooter>
       </Card>
     </div>
