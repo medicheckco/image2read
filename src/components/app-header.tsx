@@ -15,7 +15,7 @@ export default function AppHeader() {
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <BookAudio className="h-6 w-6 text-primary" />
           <span className="font-headline text-2xl font-bold tracking-wide">
-            image2read
+            Image2read
           </span>
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-2">

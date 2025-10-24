@@ -7,7 +7,7 @@ import { SettingsProvider } from "@/contexts/settings-context";
 import AppHeader from "@/components/app-header";
 
 export const metadata: Metadata = {
-  title: "image2read",
+  title: "Image2read",
   description: "Interactive reading support for children.",
 };
 

@@ -251,7 +251,7 @@ export default function Home() {
               <Sparkles className="h-10 w-10" />
             </div>
             <h1 className="font-headline text-5xl md:text-6xl font-bold tracking-tight">
-              image2read
+              Image2read
             </h1>
             <p className="mt-4 max-w-xl text-lg text-muted-foreground">
               Transform reading into an interactive adventure. Upload documents and tap on words to hear them spoken aloud, making learning engaging and fun for children.
@@ -285,7 +285,7 @@ export default function Home() {
             <Sparkles className="h-8 w-8" />
           </div>
           <CardTitle className="font-headline text-4xl">
-            Welcome to image2read
+            Welcome to Image2read
           </CardTitle>
           <CardDescription className="pt-2 text-base">
             Turn any document into an interactive reading lesson. Upload a file
