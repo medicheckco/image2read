@@ -16,7 +16,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { MockDocument, TextElement, DocumentPage } from "@/lib/types";
-import { MOCK_DOC } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 
 // Setup PDF.js worker
@@ -246,18 +245,18 @@ export default function Home() {
     return (
       <div className="flex h-full min-h-[calc(100vh-4rem)] flex-col items-center justify-center bg-background text-foreground">
         <div className="flex-grow w-full" aria-hidden="true">{/* Top ad space */}</div>
-        <div className="flex flex-col items-center justify-center p-4 text-center">
+        <div className="container mx-auto flex max-w-2xl flex-col items-center justify-center p-4 text-center">
             <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
               <Sparkles className="h-10 w-10" />
             </div>
-            <h1 className="font-headline text-5xl md:text-6xl font-bold tracking-tight">
+            <h1 className="font-headline text-4xl font-semibold md:text-5xl lg:text-6xl tracking-tight">
               Image2read
             </h1>
-            <p className="mt-4 max-w-xl text-lg text-muted-foreground">
+            <p className="mt-6 max-w-xl text-lg leading-8 text-muted-foreground">
               Transform reading into an interactive adventure. Upload documents and tap on words to hear them spoken aloud, making learning engaging and fun for children.
             </p>
-            <Button size="lg" className="mt-8 text-xl" onClick={() => setShowLanding(false)}>
-              Get Started <ArrowRight className="ml-2 h-6 w-6" />
+            <Button size="lg" className="mt-10" onClick={() => setShowLanding(false)}>
+              Get Started <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
         </div>
         <div className="flex-grow w-full" aria-hidden="true">{/* Bottom ad space */}</div>
@@ -279,17 +278,16 @@ export default function Home() {
   return (
     <div className="container mx-auto flex h-full min-h-[calc(100vh-4rem)] items-center justify-center p-4">
       <canvas ref={canvasRef} className="hidden" />
-      <Card className="w-full max-w-lg text-center shadow-xl">
+      <Card className="w-full max-w-lg text-center shadow-lg border-0">
         <CardHeader>
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Sparkles className="h-8 w-8" />
           </div>
-          <CardTitle className="font-headline text-4xl">
-            Welcome to Image2read
+          <CardTitle className="font-headline text-3xl">
+            Upload a Document
           </CardTitle>
           <CardDescription className="pt-2 text-base">
-            Turn any document into an interactive reading lesson. Upload a file
-            to get started.
+            Turn any document into an interactive reading lesson.
           </CardDescription>
         </CardHeader>
         <CardContent>

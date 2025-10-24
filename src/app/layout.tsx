@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Belleza, Alegreya } from "next/font/google";
+import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
@@ -11,16 +11,17 @@ export const metadata: Metadata = {
   description: "Interactive reading support for children.",
 };
 
-const fontHeadline = Belleza({
-  subsets: ["latin"],
-  weight: ["400"],
-  variable: "--font-headline",
-});
-
-const fontBody = Alegreya({
+const fontBody = Inter({
   subsets: ["latin"],
   variable: "--font-body",
 });
+
+const fontHeadline = Poppins({
+  subsets: ["latin"],
+  weight: ["600"],
+  variable: "--font-headline",
+});
+
 
 export default function RootLayout({
   children,
@@ -29,11 +30,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&family=Belleza&display=swap" rel="stylesheet" />
-      </head>
       <body
         className={cn(
           "min-h-screen bg-background font-body antialiased",
