@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import Script from "next/script";
@@ -10,6 +11,9 @@ import AppHeader from "@/components/app-header";
 export const metadata: Metadata = {
   title: "Image2read",
   description: "Interactive reading support for children.",
+  other: {
+    "google-adsense-account": "ca-pub-3199725653737122",
+  },
 };
 
 const fontBody = Inter({
