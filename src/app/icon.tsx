@@ -13,7 +13,7 @@ export default function Icon() {
     (
       <div
         style={{
-          background: "hsl(217, 91%, 60%)",
+          background: "hsl(240 5.9% 10%)",
           width: "100%",
           height: "100%",
           display: "flex",
@@ -30,9 +30,9 @@ export default function Icon() {
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
           <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
           <path d="M8 7h6" />

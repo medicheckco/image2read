@@ -244,22 +244,20 @@ export default function Home() {
   if (showLanding) {
     return (
       <div className="flex h-full min-h-[calc(100vh-4rem)] flex-col items-center justify-center bg-background text-foreground">
-        <div className="flex-grow w-full" aria-hidden="true">{/* Top ad space */}</div>
-        <div className="container mx-auto flex max-w-2xl flex-col items-center justify-center p-4 text-center">
-            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Sparkles className="h-10 w-10" />
-            </div>
-            <h1 className="font-headline text-4xl font-semibold md:text-5xl lg:text-6xl tracking-tight">
-              Image2read
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-muted-foreground">
-              Transform reading into an interactive adventure. Upload documents and tap on words to hear them spoken aloud, making learning engaging and fun for children.
-            </p>
-            <Button size="lg" className="mt-10" onClick={() => setShowLanding(false)}>
-              Get Started <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+        <div className="container mx-auto flex max-w-2xl flex-col items-center justify-center space-y-6 p-4 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Sparkles className="h-10 w-10" />
+          </div>
+          <h1 className="font-headline text-4xl font-semibold tracking-tight md:text-5xl lg:text-6xl">
+            Image2read
+          </h1>
+          <p className="max-w-xl text-lg leading-8 text-muted-foreground">
+            Transform reading into an interactive adventure. Upload documents and tap on words to hear them spoken aloud, making learning engaging and fun for children.
+          </p>
+          <Button size="lg" onClick={() => setShowLanding(false)}>
+            Get Started <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
         </div>
-        <div className="flex-grow w-full" aria-hidden="true">{/* Bottom ad space */}</div>
       </div>
     );
   }
