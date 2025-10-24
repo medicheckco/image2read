@@ -120,7 +120,7 @@ function DocumentViewer({ document, onExit, overrideImageUrls }: DocumentViewerP
     } catch {}
 
     // Keep spaces and common punctuation. Trim empty results.
-    const cleanedText = text.replace(/[^a-zA-Z0-9'\-\s.,?!€£€–—]/g, "").trim();
+    const cleanedText = text.replace(/[^a-zA-Z0-9'\-]/g, " ").trim();
     if (!cleanedText) return;
 
     const utterance = new SpeechSynthesisUtterance(cleanedText);
@@ -156,7 +156,7 @@ function DocumentViewer({ document, onExit, overrideImageUrls }: DocumentViewerP
     }
   };
 
-  const handleWordClick = (word: TextElement) => {
+  const handleWordHover = (word: TextElement) => {
     speak(word.text);
     setActiveWord(word.id);
     setTimeout(() => setActiveWord(null), 300);
@@ -264,12 +264,12 @@ function DocumentViewer({ document, onExit, overrideImageUrls }: DocumentViewerP
               const isActive = activeWord === word.id;
 
               return (
-                <button
+                <div
                   key={word.id}
                   aria-label={`Word ${word.text}`}
-                  onClick={() => handleWordClick(word)}
+                  onMouseEnter={() => handleWordHover(word)}
                   className={cn(
-                    "absolute z-20 overflow-hidden rounded-sm transition-all duration-150",
+                    "absolute z-20 cursor-pointer overflow-hidden rounded-sm transition-all duration-150",
                     isActive ? "bg-accent/50" : "hover:bg-accent/30"
                   )}
                   style={{
@@ -304,9 +304,9 @@ function DocumentViewer({ document, onExit, overrideImageUrls }: DocumentViewerP
                     height: `${word.height}%`,
                   }}
                 >
-                  <button
+                  <div
                     aria-label={`Word ${word.text}`}
-                    onClick={() => handleWordClick(word)}
+                    onMouseEnter={() => handleWordHover(word)}
                     className={cn(
                       "h-full w-full cursor-pointer rounded-sm transition-all duration-300",
                       activeWord === word.id ? "scale-105 bg-accent/50" : "hover:bg-accent/30"
