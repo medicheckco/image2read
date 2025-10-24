@@ -4,7 +4,7 @@
 import { useState, useRef } from "react";
 import Tesseract from "tesseract.js";
 import * as pdfjsLib from "pdfjs-dist";
-import { Loader2, UploadCloud, Sparkles } from "lucide-react";
+import { Loader2, UploadCloud, Sparkles, ArrowRight } from "lucide-react";
 import DocumentViewer from "@/components/document-viewer";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +26,7 @@ export default function Home() {
   const [document, setDocument] = useState<MockDocument | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Processing...");
+  const [showLanding, setShowLanding] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
@@ -240,6 +241,29 @@ export default function Home() {
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
+
+  if (showLanding) {
+    return (
+      <div className="flex h-full min-h-[calc(100vh-4rem)] flex-col items-center justify-center bg-background text-foreground">
+        <div className="flex-grow w-full" aria-hidden="true">{/* Top ad space */}</div>
+        <div className="flex flex-col items-center justify-center p-4 text-center">
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Sparkles className="h-10 w-10" />
+            </div>
+            <h1 className="font-headline text-5xl md:text-6xl font-bold tracking-tight">
+              PhonoTouch
+            </h1>
+            <p className="mt-4 max-w-xl text-lg text-muted-foreground">
+              Transform reading into an interactive adventure. Upload documents and tap on words to hear them spoken aloud, making learning engaging and fun for children.
+            </p>
+            <Button size="lg" className="mt-8 text-xl" onClick={() => setShowLanding(false)}>
+              Get Started <ArrowRight className="ml-2 h-6 w-6" />
+            </Button>
+        </div>
+        <div className="flex-grow w-full" aria-hidden="true">{/* Bottom ad space */}</div>
+      </div>
+    );
+  }
 
   if (document) {
     const imageUrls = (document as any).uploadedImageUrls || undefined;
