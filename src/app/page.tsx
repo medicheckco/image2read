@@ -118,9 +118,9 @@ export default function Home() {
       const data = imageData.data;
       for (let i = 0; i < data.length; i += 4) {
           const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-          data[i] = avg; // red
-          data[i + 1] = avg; // green
-          data[i + 2] = avg; // blue
+          data[i] = avg > 128 ? 255 : 0; // red
+          data[i + 1] = avg > 128 ? 255 : 0; // green
+          data[i + 2] = avg > 128 ? 255 : 0; // blue
       }
       context.putImageData(imageData, 0, 0);
 
@@ -169,9 +169,9 @@ export default function Home() {
           const data = imageData.data;
           for (let j = 0; j < data.length; j += 4) {
             const avg = (data[j] + data[j + 1] + data[j + 2]) / 3;
-            data[j] = avg; // red
-            data[j + 1] = avg; // green
-            data[j + 2] = avg; // blue
+            data[j] = avg > 128 ? 255 : 0; // red
+            data[j + 1] = avg > 128 ? 255 : 0; // green
+            data[j + 2] = avg > 128 ? 255 : 0; // blue
           }
           context.putImageData(imageData, 0, 0);
 
@@ -276,7 +276,7 @@ export default function Home() {
             Image2read
           </h1>
           <p className="max-w-xl text-lg leading-8 text-muted-foreground">
-            Transform reading into an interactive adventure. Upload documents and tap on words to hear them spoken aloud, making learning engaging and fun for children.
+            Transform reading into an interactive adventure. Upload a document and tap on words to hear them spoken aloud.
           </p>
           <Button size="lg" onClick={() => setShowLanding(false)}>
             Get Started <ArrowRight className="ml-2 h-5 w-5" />

@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -19,6 +20,9 @@ export default function AppHeader() {
           </span>
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-2">
+           <Button variant="link" asChild>
+            <Link href="/about">About</Link>
+          </Button>
           <SettingsSheet>
             <Button variant="ghost" size={isMobile ? "icon" : "default"}>
               <Cog className="h-5 w-5" />
